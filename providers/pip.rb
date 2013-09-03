@@ -108,8 +108,16 @@ def current_installed_version
   @current_installed_version ||= begin
     delimeter = /==/
 
-    version_check_cmd = "#{which_pip(new_resource)} freeze | grep -i '^#{new_resource.package_name}=='"
-    # incase you upgrade pip with pip!
+    # strip out extra name.
+    base_package_name = new_resource.package_name.match(/^([^\[]+)(\[.+\])?$/)
+    if base_package_name.nil?
+      base_package_name = new_resource.package_name
+    else
+      base_package_name = base_package_name[1]
+    end
+    version_check_cmd = "#{which_pip(new_resource)} freeze | grep -i '^#{base_package_name}=='"
+
+    # in case you upgrade pip with pip!
     if new_resource.package_name.eql?('pip')
       delimeter = /\s/
       version_check_cmd = "pip --version"
